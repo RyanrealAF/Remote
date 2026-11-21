@@ -120,7 +120,7 @@ class MainActivity : Activity() {
             if (event.repeatCount > 0) append(" repeat=${event.repeatCount}")
             append("\n    device=${device?.name ?: "unknown"}")
             append(" | source=${sourceName(event.source)}")
-            append(" | meta=${KeyEvent.metaStateToString(event.metaState).ifEmpty { "none" }}")
+            append(" | meta=${metaStateToString(event.metaState).ifEmpty { "none" }}")
         }
         addLogLine(line)
         runOnUiThread {
@@ -168,6 +168,24 @@ class MainActivity : Activity() {
             names += "joystick"
         }
         return if (names.isEmpty()) "0x${source.toString(16)}" else names.distinct().joinToString("+")
+    }
+
+    // Local replacement for KeyEvent.metaStateToString, which is a hidden
+    // framework API and not callable from apps. Returns "" when no meta
+    // keys are held so the call site can fall back to "none".
+    private fun metaStateToString(metaState: Int): String {
+        if (metaState == 0) return ""
+        val parts = mutableListOf<String>()
+        if ((metaState and KeyEvent.META_SHIFT_ON) != 0) parts += "SHIFT"
+        if ((metaState and KeyEvent.META_ALT_ON) != 0) parts += "ALT"
+        if ((metaState and KeyEvent.META_SYM_ON) != 0) parts += "SYM"
+        if ((metaState and KeyEvent.META_FUNCTION_ON) != 0) parts += "FUNCTION"
+        if ((metaState and KeyEvent.META_CTRL_ON) != 0) parts += "CTRL"
+        if ((metaState and KeyEvent.META_META_ON) != 0) parts += "META"
+        if ((metaState and KeyEvent.META_CAPS_LOCK_ON) != 0) parts += "CAPS_LOCK"
+        if ((metaState and KeyEvent.META_NUM_LOCK_ON) != 0) parts += "NUM_LOCK"
+        if ((metaState and KeyEvent.META_SCROLL_LOCK_ON) != 0) parts += "SCROLL_LOCK"
+        return parts.joinToString("|")
     }
 
     private fun addLogLine(line: String) {
